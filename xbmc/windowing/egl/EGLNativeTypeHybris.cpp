@@ -27,6 +27,7 @@
 #include <EGL/egl.h>
 #include "EGLNativeTypeHybris.h"
 #include "utils/log.h"
+#include "utils/StringUtils.h"
 #include "guilib/gui3d.h"
 
 CEvent displayEvent;
@@ -295,7 +296,7 @@ bool CEGLNativeTypeHybris::GetNativeResolution(RESOLUTION_INFO *res) const
   res->fPixelRatio   = 1.0f;
   res->iScreenWidth  = res->iWidth;
   res->iScreenHeight = res->iHeight;
-  res->strMode.Format("%dx%d @ %.2f%s - Full Screen", res->iScreenWidth, res->iScreenHeight, res->fRefreshRate,
+  res->strMode = StringUtils::Format("%dx%d @ %.2f%s - Full Screen", res->iScreenWidth, res->iScreenHeight, res->fRefreshRate,
   res->dwFlags & D3DPRESENTFLAG_INTERLACED ? "i" : "");
   CLog::Log(LOGNOTICE,"Current resolution: %s\n",res->strMode.c_str());
   return true;
