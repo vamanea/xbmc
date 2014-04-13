@@ -32,6 +32,12 @@
 #if defined(HAVE_VIDEOTOOLBOXDECODER)
 #include "Video/DVDVideoCodecVideoToolBox.h"
 #endif
+#if defined(HAVE_EXYNOS4)
+#include "Video/DVDVideoCodecExynos4.h"
+#endif
+#if defined(HAVE_EXYNOS5)
+#include "Video/DVDVideoCodecExynos5.h"
+#endif
 #include "Video/DVDVideoCodecFFmpeg.h"
 #include "Video/DVDVideoCodecOpenMax.h"
 #include "Video/DVDVideoCodecLibMpeg2.h"
@@ -46,6 +52,9 @@
 #if defined(TARGET_ANDROID)
 #include "Video/DVDVideoCodecAndroidMediaCodec.h"
 #include "android/activity/AndroidFeatures.h"
+#endif
+#if defined(TARGET_HYBRIS)
+#include "Video/DVDVideoCodecHybris.h"
 #endif
 #include "Audio/DVDAudioCodecFFmpeg.h"
 #include "Audio/DVDAudioCodecLibMad.h"
@@ -194,11 +203,26 @@ CDVDVideoCodec* CDVDFactoryCodec::CreateVideoCodec(CDVDStreamInfo &hint, unsigne
 #elif defined(TARGET_POSIX) && !defined(TARGET_DARWIN)
   hwSupport += "VAAPI:no ";
 #endif
+#if defined(TARGET_HYBRIS)
+  hwSupport += "hybris:yes ";
+#else
+  hwSupport += "hybris:no";
+#endif
+#if defined(HAVE_EXYNOS4) && defined(_LINUX)
+  hwSupport += "MFCv5:yes ";
+#elif defined(_LINUX)
+  hwSupport += "MFCv5:no ";
+#endif
+#if defined(HAVE_EXYNOS5) && defined(_LINUX)
+  hwSupport += "MFCv6:yes ";
+#elif defined(_LINUX)
+  hwSupport += "MFCv6:no ";
+#endif
 
-  CLog::Log(LOGDEBUG, "CDVDFactoryCodec: compiled in hardware support: %s", hwSupport.c_str());
-#if defined(HAS_LIBAMCODEC)
-  // amcodec can handle dvd playback.
-  if (!CSettings::Get().GetBool("videoplayer.useamcodec"))
+    CLog::Log(LOGDEBUG, "CDVDFactoryCodec: compiled in hardware support: %s", hwSupport.c_str());
+#if defined(HAS_LIBAMCODEC)                                                                                                                                                                               
+    // amcodec can handle dvd playback.                                                                                                                                                                     
+    if (!CSettings::Get().GetBool("videoplayer.useamcodec"))                                                                                                                                                
 #endif
   {
     // dvd's have weird still-frames in it, which is not fully supported in ffmpeg
@@ -214,6 +238,24 @@ CDVDVideoCodec* CDVDFactoryCodec::CreateVideoCodec(CDVDStreamInfo &hint, unsigne
     if (hint.codec == AV_CODEC_ID_H264 && !hint.ptsinvalid)
     {
       if ( (pCodec = OpenCodec(new CDVDVideoCodecVDA(), hint, options)) ) return pCodec;
+    }
+  }
+#endif
+
+#if defined(HAVE_EXYNOS4) && defined(_LINUX)
+  if( (pCodec = OpenCodec(new CDVDVideoCodecExynos4(), hint, options)) ) return pCodec;
+#endif
+
+#if defined(HAVE_EXYNOS5) && defined(_LINUX)
+  if( (pCodec = OpenCodec(new CDVDVideoCodecExynos5(), hint, options)) ) return pCodec;
+#endif
+
+#if defined(TARGET_HYBRIS)
+  if (!hint.software )
+  {
+    if (hint.codec == CODEC_ID_H264 || hint.codec == CODEC_ID_MPEG2VIDEO || hint.codec == CODEC_ID_VC1)
+    {
+      if ( (pCodec = OpenCodec(new CDVDVideoCodecHybris(), hint, options)) ) return pCodec;
     }
   }
 #endif

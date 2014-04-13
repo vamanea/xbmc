@@ -17,7 +17,6 @@
  *  <http://www.gnu.org/licenses/>.
  *
  */
-
 #include "system.h"
 
 #ifdef HAS_EGL
@@ -27,6 +26,7 @@
 #include "EGLNativeTypeAmlogic.h"
 #include "EGLNativeTypeRaspberryPI.h"
 #include "EGLNativeTypeWayland.h"
+#include "EGLNativeTypeHybris.h"
 #include "EGLWrapper.h"
 
 #define CheckError() m_result = eglGetError(); if(m_result != EGL_SUCCESS) CLog::Log(LOGERROR, "EGL error in %s: %x",__FUNCTION__, m_result);
@@ -82,6 +82,7 @@ bool CEGLWrapper::Initialize(const std::string &implementation)
   // that we know will work
   if ((nativeGuess = CreateEGLNativeType<CEGLNativeTypeWayland>(implementation)) ||
       (nativeGuess = CreateEGLNativeType<CEGLNativeTypeAndroid>(implementation)) ||
+      (nativeGuess = CreateEGLNativeType<CEGLNativeTypeHybris>(implementation)) ||
       (nativeGuess = CreateEGLNativeType<CEGLNativeTypeAmlogic>(implementation)) ||
       (nativeGuess = CreateEGLNativeType<CEGLNativeTypeRaspberryPI>(implementation)))
   {
@@ -269,7 +270,7 @@ bool CEGLWrapper::CreateSurface(EGLDisplay display, EGLConfig config, EGLSurface
   EGLNativeWindowType *nativeWindow=NULL;
   if (!m_nativeTypes->GetNativeWindow((XBNativeWindowType**)&nativeWindow))
     return false;
-
+  
   *surface = eglCreateWindowSurface(display, config, *nativeWindow, NULL);
   CheckError();
   return *surface != EGL_NO_SURFACE;
@@ -371,6 +372,7 @@ bool CEGLWrapper::SetVSync(EGLDisplay display, bool enable)
   EGLBoolean status;
   // depending how buffers are setup, eglSwapInterval
   // might fail so let caller decide if this is an error.
+  enable = true;
   status = eglSwapInterval(display, enable ? 1 : 0);
   CheckError();
   return status;
