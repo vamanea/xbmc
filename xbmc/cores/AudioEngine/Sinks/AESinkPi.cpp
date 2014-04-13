@@ -36,6 +36,8 @@
 #define NUM_OMX_BUFFERS 2
 #define AUDIO_PLAYBUFFER (1.0/20.0)
 
+static const unsigned int PassthroughSampleRates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 41400, 48000, 88200, 96000, 176400, 192000 };
+
 CAEDeviceInfo CAESinkPi::m_info;
 
 CAESinkPi::CAESinkPi() :
@@ -55,7 +57,7 @@ void CAESinkPi::SetAudioDest()
   OMX_ERRORTYPE omx_err   = OMX_ErrorNone;
   OMX_CONFIG_BRCMAUDIODESTINATIONTYPE audioDest;
   OMX_INIT_STRUCTURE(audioDest);
-  if (CSettings::Get().GetString("audiooutput.audiodevice") == "Pi:Analogue")
+  if (CSettings::Get().GetString("audiooutput.audiodevice") == "PI:Analogue")
     strncpy((char *)audioDest.sName, "local", strlen("local"));
   else
     strncpy((char *)audioDest.sName, "hdmi", strlen("hdmi"));
@@ -66,6 +68,19 @@ void CAESinkPi::SetAudioDest()
 
 bool CAESinkPi::Initialize(AEAudioFormat &format, std::string &device)
 {
+  char response[80];
+  /* if we are raw need to let gpu know */
+  if (AE_IS_RAW(format.m_dataFormat))
+  {
+    vc_gencmd(response, sizeof response, "hdmi_stream_channels 1");
+    m_passthrough = true;
+  }
+  else
+  {
+    vc_gencmd(response, sizeof response, "hdmi_stream_channels 0");
+    m_passthrough = false;
+  }
+
   m_initDevice = device;
   m_initFormat = format;
   // setup for a 50ms sink feed from SoftAE
@@ -269,8 +284,12 @@ void CAESinkPi::EnumerateDevicesEx(AEDeviceInfoList &list, bool force)
   m_info.m_displayNameExtra = "";
   m_info.m_channels += AE_CH_FL;
   m_info.m_channels += AE_CH_FR;
-  m_info.m_sampleRates.push_back(48000);
+  for (unsigned int i=0; i<sizeof PassthroughSampleRates/sizeof *PassthroughSampleRates; i++)
+    m_info.m_sampleRates.push_back(PassthroughSampleRates[i]);
   m_info.m_dataFormats.push_back(AE_FMT_S16LE);
+  m_info.m_dataFormats.push_back(AE_FMT_AC3);
+  m_info.m_dataFormats.push_back(AE_FMT_DTS);
+  m_info.m_dataFormats.push_back(AE_FMT_EAC3);
 
   list.push_back(m_info);
 

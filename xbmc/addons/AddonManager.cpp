@@ -305,6 +305,7 @@ void CAddonMgr::DeInit()
   delete m_cpluff;
   m_cpluff = NULL;
   m_database.Close();
+  m_disabled.clear();
 }
 
 bool CAddonMgr::HasAddons(const TYPE &type, bool enabled /*= true*/)
@@ -371,13 +372,13 @@ bool CAddonMgr::ReloadSettings(const CStdString &id)
   return false;
 }
 
-bool CAddonMgr::GetAllOutdatedAddons(VECADDONS &addons, bool enabled /*= true*/)
+bool CAddonMgr::GetAllOutdatedAddons(VECADDONS &addons, bool getLocalVersion /*= false*/)
 {
   CSingleLock lock(m_critSection);
   for (int i = ADDON_UNKNOWN+1; i < ADDON_VIZ_LIBRARY; ++i)
   {
     VECADDONS temp;
-    if (CAddonMgr::Get().GetAddons((TYPE)i, temp, enabled))
+    if (CAddonMgr::Get().GetAddons((TYPE)i, temp, true))
     {
       AddonPtr repoAddon;
       for (unsigned int j = 0; j < temp.size(); j++)
@@ -396,17 +397,21 @@ bool CAddonMgr::GetAllOutdatedAddons(VECADDONS &addons, bool enabled /*= true*/)
         if (temp[j]->Version() < repoAddon->Version() &&
             !m_database.IsAddonBlacklisted(temp[j]->ID(),
                                            repoAddon->Version().c_str()))
+        {
+          if (getLocalVersion)
+            repoAddon->Props().version = temp[j]->Version();
           addons.push_back(repoAddon);
+        }
       }
     }
   }
   return !addons.empty();
 }
 
-bool CAddonMgr::HasOutdatedAddons(bool enabled /*= true*/)
+bool CAddonMgr::HasOutdatedAddons()
 {
   VECADDONS dummy;
-  return GetAllOutdatedAddons(dummy,enabled);
+  return GetAllOutdatedAddons(dummy);
 }
 
 bool CAddonMgr::GetAddons(const TYPE &type, VECADDONS &addons, bool enabled /* = true */)

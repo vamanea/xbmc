@@ -66,13 +66,17 @@ static CEvent keyboardFinishedEvent;
     _textField.returnKeyType = UIReturnKeyDone;
     _textField.autocapitalizationType = UITextAutocapitalizationTypeNone;
     _textField.backgroundColor = [UIColor whiteColor];
+    _textField.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
     _textField.delegate = self;
     
     CGRect labelFrame = textFieldFrame;
     labelFrame.origin.x = 0;
-    _heading = [[UILabel alloc] initWithFrame:labelFrame];
+    _heading = [[UITextField alloc] initWithFrame:labelFrame];
+    _heading.borderStyle = UITextBorderStyleNone;
     _heading.backgroundColor = [UIColor whiteColor];
     _heading.adjustsFontSizeToFitWidth = YES;
+    _heading.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
+    _heading.enabled = NO;
 
     [self addSubview:_heading];
     [self addSubview:_textField];
@@ -254,6 +258,24 @@ static CEvent keyboardFinishedEvent;
   else
   {
     [self doDeactivate:nil];
+  }
+}
+
+- (void) setKeyboardText:(NSString*)aText closeKeyboard:(BOOL)closeKeyboard
+{
+  LOG(@"%s: %@, %d", __PRETTY_FUNCTION__, aText, closeKeyboard);
+  if([NSThread currentThread] != [NSThread mainThread])
+  {
+    [self performSelectorOnMainThread:@selector(setDefault:) withObject:aText  waitUntilDone:YES];
+  }
+  else
+  {
+    [self setDefault:aText];
+  }
+  if (closeKeyboard)
+  {
+    _confirmed = YES;
+    [self deactivate];
   }
 }
 

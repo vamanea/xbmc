@@ -18,32 +18,48 @@ msgstr ""
 
 msgctxt "#30000"
 msgid "Detail [CPU intensive]"
-msgstr "Obciążenie [CPU]"
+msgstr "Szczegółowe [obciąża procesor]"
 
 msgctxt "#30001"
 msgid "Low"
-msgstr "min."
+msgstr "Niski"
 
 msgctxt "#30002"
 msgid "Normal"
-msgstr "Zwykły"
+msgstr "Normalny"
 
 msgctxt "#30003"
 msgid "High"
-msgstr "Wysoka"
+msgstr "Wysoki"
 
 msgctxt "#30004"
 msgid "Extreme"
-msgstr "Najwyższa"
+msgstr "Maksymalny"
+
+msgctxt "#30005"
+msgid "Nervous Mode [more mode changes]"
+msgstr "Tryb mocny [więcej zmian trybów]"
+
+msgctxt "#30006"
+msgid "Speed [skip some frames]"
+msgstr "Szybkość [pomija niektóre klatki]"
+
+msgctxt "#30007"
+msgid "Very Low"
+msgstr "Bardzo niski"
 
 msgctxt "#30008"
 msgid "Low"
-msgstr "min."
+msgstr "Niski"
 
 msgctxt "#30009"
 msgid "Normal"
-msgstr "Zwykły"
+msgstr "Normalny"
 
 msgctxt "#30010"
 msgid "High"
-msgstr "Wysoka"
+msgstr "Wysoki"
+
+msgctxt "#30011"
+msgid "Use a Persistence File [faster startup]"
+msgstr "Zapisuj do pliku [szybsze uruchomienie]"

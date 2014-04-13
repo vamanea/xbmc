@@ -975,6 +975,8 @@ bool CPVRManager::OpenLiveStream(const CFileItem &channel)
       CDateTime::GetCurrentDateTime().GetAsTime(tNow);
       playingChannel->SetLastWatched(tNow);
       bPersistChannel = true;
+
+      m_channelGroups->SetLastPlayedGroup(GetPlayingGroup(playingChannel->IsRadio()));
     }
   }
 
@@ -988,9 +990,6 @@ bool CPVRManager::OpenRecordedStream(const CPVRRecording &tag)
 {
   bool bReturn = false;
   CSingleLock lock(m_critSection);
-
-  CLog::Log(LOGDEBUG,"PVRManager - %s - opening recorded stream '%s'",
-      __FUNCTION__, tag.m_strFile.c_str());
 
   if ((bReturn = m_addons->OpenStream(tag)) != false)
   {
@@ -1016,6 +1015,8 @@ void CPVRManager::CloseStream(void)
       CDateTime::GetCurrentDateTime().GetAsTime(tNow);
       channel->SetLastWatched(tNow);
       bPersistChannel = true;
+
+      m_channelGroups->SetLastPlayedGroup(GetPlayingGroup(channel->IsRadio()));
     }
 
     m_addons->CloseStream();
@@ -1218,6 +1219,8 @@ bool CPVRManager::PerformChannelSwitch(const CPVRChannel &channel, bool bPreview
     time_t tNow;
     CDateTime::GetCurrentDateTime().GetAsTime(tNow);
     currentChannel->SetLastWatched(tNow);
+
+    m_channelGroups->SetLastPlayedGroup(GetPlayingGroup(currentChannel->IsRadio()));
   }
 
   // store channel settings
@@ -1317,10 +1320,8 @@ bool CPVRManager::IsIdle(void) const
     const CDateTime next = m_timers->GetNextEventTime();
     const CDateTimeSpan delta = next - now;
 
-    if (delta < idle)
-    {
+    if (delta <= idle)
       return false;
-    }
   }
 
   return true;

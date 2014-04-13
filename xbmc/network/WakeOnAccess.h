@@ -35,7 +35,7 @@ public:
 
   virtual void OnJobComplete(unsigned int jobID, bool success, CJob *job);
   virtual void OnSettingsLoaded();
-  virtual void OnSettingsSaved() const;
+  virtual void OnSettingsSaved();
 
   // struct to keep per host settings
   struct WakeUpEntry
@@ -61,7 +61,7 @@ private:
   void LoadFromXML();
   void SaveToXML();
 
-  void SetEnabled(bool enabled) { m_enabled = enabled; }
+  void SetEnabled(bool enabled);
   bool IsEnabled() const { return m_enabled; }
 
   void QueueMACDiscoveryForHost(const CStdString& host);

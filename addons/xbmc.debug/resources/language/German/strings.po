@@ -18,7 +18,7 @@ msgstr ""
 
 msgctxt "#30000"
 msgid "Verbose logging for SMB library"
-msgstr "Ausführliches Logging der SMB-Bibliothek."
+msgstr "Ausführliches Loggen der SMB-Bibliothek."
 
 msgctxt "#30001"
 msgid "Verbose logging for CURL library (http, dav)"
@@ -39,3 +39,7 @@ msgstr "Ausführliches Logging der RTMP Bibliothek."
 msgctxt "#30005"
 msgid "Verbose logging for DBUS calls"
 msgstr "Ausführliches Logging der DBUS Aufrufe."
+
+msgctxt "#30006"
+msgid "Verbose logging for JSON-RPC requests"
+msgstr "Ausführliches Logging der JSON-RPC Anfragen"

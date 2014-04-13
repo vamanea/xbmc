@@ -140,10 +140,11 @@ void CWinRenderer::SelectRenderMethod()
   {
     CLog::Log(LOGNOTICE, "D3D: rendering method forced to DXVA processor");
     m_renderMethod = RENDER_DXVA;
-    if (!m_processor->Open(m_sourceWidth, m_sourceHeight, m_iFlags, m_format, m_extended_format))
+    if (!m_processor || !m_processor->Open(m_sourceWidth, m_sourceHeight, m_iFlags, m_format, m_extended_format))
     {
       CLog::Log(LOGNOTICE, "D3D: unable to open DXVA processor");
-      m_processor->Close();
+      if (m_processor)  
+        m_processor->Close();
       m_renderMethod = RENDER_INVALID;
     }
   }
@@ -155,13 +156,16 @@ void CWinRenderer::SelectRenderMethod()
     {
       case RENDER_METHOD_DXVAHD:
       case RENDER_METHOD_DXVA:
-        m_renderMethod = RENDER_DXVA;
-        if (m_processor->Open(m_sourceWidth, m_sourceHeight, m_iFlags, m_format, m_extended_format))
-            break;
-        else
+        if (!m_processor || !m_processor->Open(m_sourceWidth, m_sourceHeight, m_iFlags, m_format, m_extended_format))
         {
           CLog::Log(LOGNOTICE, "D3D: unable to open DXVA processor");
-          m_processor->Close();
+          if (m_processor)
+            m_processor->Close();
+        }
+        else
+        {
+          m_renderMethod = RENDER_DXVA;
+          break;
         }
       // Drop through to pixel shader
       case RENDER_METHOD_AUTO:
@@ -392,20 +396,14 @@ unsigned int CWinRenderer::PreInit()
 
   g_Windowing.Get3DDevice()->GetDeviceCaps(&m_deviceCaps);
 
+  m_formats.clear();
   m_formats.push_back(RENDER_FMT_YUV420P);
-  if(g_Windowing.IsTextureFormatOk(D3DFMT_L16, 0))
-  {
-    m_formats.push_back(RENDER_FMT_YUV420P10);
-    m_formats.push_back(RENDER_FMT_YUV420P16);
-  }
-  m_formats.push_back(RENDER_FMT_NV12);
-  m_formats.push_back(RENDER_FMT_YUYV422);
-  m_formats.push_back(RENDER_FMT_UYVY422);
 
   m_iRequestedMethod = CSettings::Get().GetInt("videoplayer.rendermethod");
 
-  if (g_advancedSettings.m_DXVAForceProcessorRenderer || m_iRequestedMethod == RENDER_METHOD_DXVA
-      || m_iRequestedMethod == RENDER_METHOD_DXVAHD)
+  if (g_advancedSettings.m_DXVAForceProcessorRenderer
+  ||  m_iRequestedMethod == RENDER_METHOD_DXVA
+  ||  m_iRequestedMethod == RENDER_METHOD_DXVAHD)
   {
     if (m_iRequestedMethod != RENDER_METHOD_DXVA && CSysInfo::IsWindowsVersionAtLeast(CSysInfo::WindowsVersionWin7))
     {
@@ -414,18 +412,30 @@ unsigned int CWinRenderer::PreInit()
       {
         CLog::Log(LOGNOTICE, "CWinRenderer::Preinit - could not init DXVA-HD processor - skipping");
         SAFE_DELETE(m_processor);
-        m_processor = new DXVA::CProcessor();
       }
-      else
-        return 0;
     }
-    else
+    if (!m_processor)
+    {
       m_processor = new DXVA::CProcessor();
-
-    if (!m_processor->PreInit())
-      CLog::Log(LOGNOTICE, "CWinRenderer::Preinit - could not init DXVA2 processor - skipping");
+      if (!m_processor->PreInit())
+      {
+        CLog::Log(LOGNOTICE, "CWinRenderer::Preinit - could not init DXVA2 processor - skipping");
+        SAFE_DELETE(m_processor);
+      }
+    }
   }
-
+  // allow other color spaces besides YV12 in case DXVA rendering is not used or not available
+  if (!m_processor || (m_iRequestedMethod != RENDER_METHOD_DXVA && m_iRequestedMethod != RENDER_METHOD_DXVAHD))
+  {
+    if (g_Windowing.IsTextureFormatOk(D3DFMT_L16, 0))
+    {
+      m_formats.push_back(RENDER_FMT_YUV420P10);
+      m_formats.push_back(RENDER_FMT_YUV420P16);
+    }
+    m_formats.push_back(RENDER_FMT_NV12);
+    m_formats.push_back(RENDER_FMT_YUYV422);
+    m_formats.push_back(RENDER_FMT_UYVY422);
+  }
   return 0;
 }
 
@@ -950,6 +960,11 @@ void CWinRenderer::Stage1()
 
     // Restore the render target
     pD3DDevice->SetRenderTarget(0, oldRT);
+
+    // MSDN says: Setting a new render target will cause the viewport 
+    // to be set to the full size of the new render target.
+    // So we need restore our viewport
+    g_Windowing.RestoreViewPort();
 
     oldRT->Release();
     newRT->Release();

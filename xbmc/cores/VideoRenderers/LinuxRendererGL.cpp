@@ -48,6 +48,7 @@
 #include "RenderCapture.h"
 #include "RenderFormats.h"
 #include "cores/IPlayer.h"
+#include "cores/dvdplayer/DVDCodecs/DVDCodecUtils.h"
 
 #ifdef HAVE_LIBVDPAU
 #include "cores/dvdplayer/DVDCodecs/Video/VDPAU.h"
@@ -742,6 +743,7 @@ unsigned int CLinuxRendererGL::PreInit()
 
   m_iYV12RenderBuffer = 0;
 
+  m_formats.clear();
   m_formats.push_back(RENDER_FMT_YUV420P);
   GLint size;
   glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_LUMINANCE16, NP2(1920), NP2(1080), 0, GL_LUMINANCE, GL_UNSIGNED_SHORT, NULL);
@@ -3115,9 +3117,11 @@ void CLinuxRendererGL::ToRGBFrame(YV12Image* im, unsigned flipIndexPlane, unsign
   int      srcStride[4] = {};
   int      srcFormat    = -1;
 
-  if (m_format == RENDER_FMT_YUV420P)
+  if (m_format == RENDER_FMT_YUV420P ||
+      m_format == RENDER_FMT_YUV420P10 ||
+      m_format == RENDER_FMT_YUV420P16)
   {
-    srcFormat = PIX_FMT_YUV420P;
+    srcFormat = CDVDCodecUtils::PixfmtFromEFormat(m_format);
     for (int i = 0; i < 3; i++)
     {
       src[i]       = im->plane[i];

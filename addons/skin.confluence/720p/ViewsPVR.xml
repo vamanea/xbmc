@@ -869,6 +869,7 @@
 				<onright>31</onright>
 				<onup>10</onup>
 				<ondown>10</ondown>
+				<onback>9000</onback> 
 				<rulerlayout height="35" width="40">
 					<control type="label" id="2">
 						<left>10</left>
@@ -982,9 +983,9 @@
 						<texture border="3">epg-genres/$INFO[ListItem.Property(GenreType)].png</texture>
 					</control>
 					<control type="label" id="1">
-						<left>6</left>
+						<left>10</left>
 						<top>3</top>
-						<width>30</width>
+						<width>20</width>
 						<height>25</height>
 						<font>font12</font>
 						<aligny>center</aligny>
@@ -1026,9 +1027,9 @@
 						<texture border="3">epg-genres/$INFO[ListItem.Property(GenreType)].png</texture>
 					</control>
 					<control type="label" id="1">
-						<left>6</left>
+						<left>10</left>
 						<top>3</top>
-						<width>30</width>
+						<width>20</width>
 						<height>25</height>
 						<font>font12</font>
 						<aligny>center</aligny>

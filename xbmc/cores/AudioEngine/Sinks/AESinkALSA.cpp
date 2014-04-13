@@ -32,6 +32,7 @@
 #include "utils/log.h"
 #include "utils/MathUtils.h"
 #include "threads/SingleLock.h"
+#include "settings/AdvancedSettings.h"
 #if defined(HAS_LIBAMCODEC)
 #include "utils/AMLUtils.h"
 #endif
@@ -531,12 +532,17 @@ unsigned int CAESinkALSA::AddPackets(uint8_t *data, unsigned int frames, bool ha
   int ret = snd_pcm_writei(m_pcm, (void*)data, frames);
   if (ret < 0)
   {
-    HandleError("snd_pcm_writei(1)", ret);
-    ret = snd_pcm_writei(m_pcm, (void*)data, frames);
-    if (ret < 0)
+    CLog::Log(LOGERROR, "CAESinkALSA - snd_pcm_writei(%d) %s - trying to recover", ret, snd_strerror(ret));
+    ret = snd_pcm_recover(m_pcm, ret, 1);
+    if(ret < 0)
     {
-      HandleError("snd_pcm_writei(2)", ret);
-      ret = 0;
+      HandleError("snd_pcm_writei(1)", ret);
+      ret = snd_pcm_writei(m_pcm, (void*)data, frames);
+      if (ret < 0)
+      {
+        HandleError("snd_pcm_writei(2)", ret);
+        ret = 0;
+      }
     }
   }
 
@@ -973,6 +979,21 @@ void CAESinkALSA::EnumerateDevice(AEDeviceInfoList &list, const std::string &dev
             /* snd_hctl_close also closes ctlhandle */
             snd_hctl_close(hctl);
 
+            // regarding data formats we don't trust ELD
+            // push all passthrough formats to the list
+            AEDataFormatList::iterator it;
+            for (enum AEDataFormat i = AE_FMT_MAX; i > AE_FMT_INVALID; i = (enum AEDataFormat)((int)i - 1))
+            {
+              if (!AE_IS_RAW(i))
+                continue;
+              it = find(info.m_dataFormats.begin(), info.m_dataFormats.end(), i);
+              if (it == info.m_dataFormats.end())
+              {
+                info.m_dataFormats.push_back(i);
+                CLog::Log(LOGNOTICE, "CAESinkALSA::%s data format \"%s\" on device \"%s\" seems to be not supported.", __FUNCTION__, CAEUtil::DataFormatToStr(i), device.c_str());
+              }
+            }
+
             if (badHDMI)
             {
               /* 
@@ -997,6 +1018,9 @@ void CAESinkALSA::EnumerateDevice(AEDeviceInfoList &list, const std::string &dev
       if (!info.m_displayNameExtra.empty())
         info.m_displayNameExtra += ' ';
       info.m_displayNameExtra += "S/PDIF";
+
+      info.m_dataFormats.push_back(AE_FMT_AC3);
+      info.m_dataFormats.push_back(AE_FMT_DTS);
     }
     else if (info.m_displayNameExtra.empty())
     {
@@ -1150,6 +1174,9 @@ bool CAESinkALSA::GetELD(snd_hctl_t *hctl, int device, CAEDeviceInfo& info, bool
 
 void CAESinkALSA::sndLibErrorHandler(const char *file, int line, const char *function, int err, const char *fmt, ...)
 {
+  if(!(g_advancedSettings.m_extraLogLevels & LOGAUDIO))
+    return;
+
   va_list arg;
   va_start(arg, fmt);
   char *errorStr;

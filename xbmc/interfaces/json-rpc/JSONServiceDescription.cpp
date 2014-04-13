@@ -171,6 +171,10 @@ JsonRpcMethodMap CJSONServiceDescription::m_methodMaps[] = {
   { "PVR.GetChannelDetails",                        CPVROperations::GetChannelDetails },
   { "PVR.GetBroadcasts",                            CPVROperations::GetBroadcasts },
   { "PVR.GetBroadcastDetails",                      CPVROperations::GetBroadcastDetails },
+  { "PVR.GetTimers",                                CPVROperations::GetTimers },
+  { "PVR.GetTimerDetails",                          CPVROperations::GetTimerDetails },
+  { "PVR.GetRecordings",                            CPVROperations::GetRecordings },
+  { "PVR.GetRecordingDetails",                      CPVROperations::GetRecordingDetails },
   { "PVR.Record",                                   CPVROperations::Record },
   { "PVR.Scan",                                     CPVROperations::Scan },
 
@@ -1511,7 +1515,7 @@ bool CJSONServiceDescription::AddType(const std::string &jsonType)
 
   if (!globalType->Parse(descriptionObject[typeName]))
   {
-    CLog::Log(LOGERROR, "JSONRPC: Could not parse type \"%s\"", typeName.c_str());
+    CLog::Log(LOGWARNING, "JSONRPC: Could not parse type \"%s\"", typeName.c_str());
     CJSONServiceDescription::removeReferenceTypeDefinition(typeName);
     if (!globalType->missingReference.empty())
     {

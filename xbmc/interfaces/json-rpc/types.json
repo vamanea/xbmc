@@ -33,6 +33,11 @@
     },
     "additionalProperties": false
   },
+  "Global.Weekday": {
+    "type": "string",
+    "enum": [ "monday", "tuesday", "wednesday", "thursday",
+              "friday", "saturday", "sunday" ]
+  },
   "Global.IncrementDecrement": {
     "type": "string",
     "enum": [ "increment", "decrement" ]
@@ -554,6 +559,7 @@
       "properties": {
         "name": { "type": "string", "required": true },
         "role": { "type": "string", "required": true },
+        "order": { "type": "integer", "required": true },
         "thumbnail": { "type": "string" }
       },
       "additionalProperties": false
@@ -798,7 +804,7 @@
                 "endtime", "runtime", "progress", "progresspercentage",
                 "genre", "episodename", "episodenum", "episodepart",
                 "firstaired", "hastimer", "isactive", "parentalrating",
-                "wasactive", "thumbnail" ]
+                "wasactive", "thumbnail", "rating" ]
     }
   },
   "PVR.Details.Broadcast": {
@@ -820,9 +826,82 @@
       "firstaired": { "type": "string" },
       "hastimer": { "type": "boolean" },
       "isactive": { "type": "boolean" },
-      "rating": { "type": "integer" },
+      "parentalrating": { "type": "integer" },
       "wasactive": { "type": "boolean" },
-      "thumbnail": { "type": "string" }
+      "thumbnail": { "type": "string" },
+      "rating": { "type": "integer" }
+    }
+  },
+  "PVR.TimerState": {
+    "type": "string",
+    "enum": [ "unknown", "new", "scheduled", "recording", "completed",
+              "aborted", "cancelled", "conflict_ok", "conflict_notok",
+              "error" ]
+  },
+  "PVR.Fields.Timer": {
+    "extends": "Item.Fields.Base",
+    "items": { "type": "string",
+      "enum": [ "title", "summary", "channelid", "isradio", "repeating",
+                "starttime", "endtime", "runtime", "lifetime", "firstday",
+                "weekdays", "priority", "startmargin", "endmargin", "state",
+                "file", "directory" ]
+    }
+  },
+  "PVR.Details.Timer": {
+    "extends": "Item.Details.Base",
+    "properties": {
+      "timerid": { "$ref": "Library.Id", "required": true },
+      "title": { "type": "string" },
+      "summary": { "type": "string" },
+      "channelid": { "$ref": "Library.Id" },
+      "isradio": { "type": "boolean" },
+      "repeating": { "type": "boolean" },
+      "starttime": { "type": "string" },
+      "endtime": { "type": "string" },
+      "runtime": { "type": "integer" },
+      "lifetime": { "type": "integer" },
+      "firstday": { "type": "string" },
+      "weekdays": { "type": "array",
+        "items": { "$ref": "Global.Weekday" },
+        "uniqueItems": true
+      },
+      "priority": { "type": "integer" },
+      "startmargin": { "type": "integer" },
+      "endmargin": { "type": "integer" },
+      "state": { "$ref": "PVR.TimerState" },
+      "file": { "type": "string" },
+      "directory": { "type": "string" }
+    }
+  },
+  "PVR.Fields.Recording": {
+    "extends": "Item.Fields.Base",
+    "items": { "type": "string",
+      "enum": [ "title", "plot", "plotoutline", "genre", "playcount",
+                "resume", "channel", "starttime","endtime", "runtime",
+                "lifetime", "icon", "art", "streamurl", "file",
+                "directory" ]
+    }
+  },
+  "PVR.Details.Recording": {
+    "extends": "Item.Details.Base",
+    "properties": {
+      "recordingid": { "$ref": "Library.Id", "required": true },
+      "title": { "type": "string" },
+      "plot": { "type": "string" },
+      "plotoutline": { "type": "string" },
+      "genre": { "type": "string" },
+      "playcount": { "type": "integer" },
+      "resume": { "$ref": "Video.Resume" },
+      "channel": { "type": "string" },
+      "starttime": { "type": "string" },
+      "endtime": { "type": "string" },
+      "runtime": { "type": "integer" },
+      "lifetime": { "type": "integer" },
+      "icon": { "type": "string" },
+      "art": { "$ref": "Media.Artwork" },
+      "streamurl": { "type": "string" },
+      "file": { "type": "string" },
+      "directory": { "type": "string" }
     }
   },
   "Textures.Details.Size": {
@@ -1538,8 +1617,8 @@
       "elementtype": { "$ref": "Setting.Type", "required": true },
       "definition": { "$ref": "Setting.Details.Setting", "required": true },
       "delimiter": { "type": "string", "required": true },
-      "minimum": { "type": "integer" },
-      "maximum": { "type": "integer" }
+      "minimumItems": { "type": "integer" },
+      "maximumItems": { "type": "integer" }
     },
     "additionalProperties": false
   },

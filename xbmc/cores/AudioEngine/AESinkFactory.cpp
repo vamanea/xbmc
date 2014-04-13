@@ -27,6 +27,10 @@
   #include "Sinks/AESinkAUDIOTRACK.h"
 #elif defined(TARGET_RASPBERRY_PI)
   #include "Sinks/AESinkPi.h"
+#elif defined(TARGET_DARWIN_IOS)
+  #include "Sinks/AESinkDARWINIOS.h"
+#elif defined(TARGET_DARWIN_OSX)
+  #include "Sinks/AESinkDARWINOSX.h"
 #elif defined(TARGET_LINUX) || defined(TARGET_FREEBSD)
   #if defined(HAS_ALSA)
     #include "Sinks/AESinkALSA.h"
@@ -62,6 +66,10 @@ void CAESinkFactory::ParseDevice(std::string &device, std::string &driver)
         driver == "AUDIOTRACK"  ||
 #elif defined(TARGET_RASPBERRY_PI)
         driver == "PI"          ||
+#elif defined(TARGET_DARWIN_IOS)
+        driver == "DARWINIOS"  ||
+#elif defined(TARGET_DARWIN_OSX)
+        driver == "DARWINOSX"  ||
 #elif defined(TARGET_LINUX) || defined(TARGET_FREEBSD)
   #if defined(HAS_ALSA)
         driver == "ALSA"        ||
@@ -97,6 +105,10 @@ IAESink *CAESinkFactory::TrySink(std::string &driver, std::string &device, AEAud
   sink = new CAESinkAUDIOTRACK();
 #elif defined(TARGET_RASPBERRY_PI)
   sink = new CAESinkPi();
+#elif defined(TARGET_DARWIN_IOS)
+  sink = new CAESinkDARWINIOS();
+#elif defined(TARGET_DARWIN_OSX)
+  sink = new CAESinkDARWINOSX();
 #elif defined(TARGET_LINUX) || defined(TARGET_FREEBSD)
   #if defined(HAS_PULSEAUDIO)
   else if (driver == "PULSE")
@@ -115,7 +127,15 @@ IAESink *CAESinkFactory::TrySink(std::string &driver, std::string &device, AEAud
 
   if (sink->Initialize(format, device))
   {
-    return sink;
+    // do some sanity checks
+    if (format.m_sampleRate == 0)
+      CLog::Log(LOGERROR, "Sink %s:%s returned invalid sample rate", driver.c_str(), device.c_str());
+    else if (format.m_channelLayout.Count() == 0)
+      CLog::Log(LOGERROR, "Sink %s:%s returned invalid channel layout", driver.c_str(), device.c_str());
+    else if (format.m_frames < 256)
+      CLog::Log(LOGERROR, "Sink %s:%s returned invalid buffer size: %d", driver.c_str(), device.c_str(), format.m_frames);
+    else
+      return sink;
   }
   sink->Deinitialize();
   delete sink;
@@ -148,7 +168,7 @@ void CAESinkFactory::EnumerateEx(AESinkInfoList &list, bool force)
 #if defined(TARGET_WINDOWS)
 
   info.m_deviceInfoList.clear();
-  info.m_sinkName = "DirectSound";
+  info.m_sinkName = "DIRECTSOUND";
   CAESinkDirectSound::EnumerateDevicesEx(info.m_deviceInfoList, force);
   if(!info.m_deviceInfoList.empty())
     list.push_back(info);
@@ -172,6 +192,22 @@ void CAESinkFactory::EnumerateEx(AESinkInfoList &list, bool force)
   info.m_deviceInfoList.clear();
   info.m_sinkName = "PI";
   CAESinkPi::EnumerateDevicesEx(info.m_deviceInfoList, force);
+  if(!info.m_deviceInfoList.empty())
+    list.push_back(info);
+
+#elif defined(TARGET_DARWIN_IOS)
+
+  info.m_deviceInfoList.clear();
+  info.m_sinkName = "DARWINIOS";
+  CAESinkDARWINIOS::EnumerateDevicesEx(info.m_deviceInfoList, force);
+  if(!info.m_deviceInfoList.empty())
+    list.push_back(info);
+
+#elif defined(TARGET_DARWIN_OSX)
+
+  info.m_deviceInfoList.clear();
+  info.m_sinkName = "DARWINOSX";
+  CAESinkDARWINOSX::EnumerateDevicesEx(info.m_deviceInfoList, force);
   if(!info.m_deviceInfoList.empty())
     list.push_back(info);
 
@@ -219,8 +255,10 @@ void CAESinkFactory::EnumerateEx(AESinkInfoList &list, bool force)
   info.m_sinkName = "ALSA";
   CAESinkALSA::EnumerateDevicesEx(info.m_deviceInfoList, force);
   if(!info.m_deviceInfoList.empty())
+  {
     list.push_back(info);
     return;
+  }
   #endif
 
   info.m_deviceInfoList.clear();
