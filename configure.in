@@ -573,16 +573,13 @@ AC_ARG_ENABLE([external-libraries],
   [use_external_libraries=$enableval],
   [use_external_libraries=no])
 
-<<<<<<< HEAD
+
 AC_ARG_ENABLE([external-ffmpeg],
   [AS_HELP_STRING([--enable-external-ffmpeg],
   [enable use of external ffmpeg libraries (default is no) 'Linux only'])],
   [use_external_ffmpeg=$enableval],
   [use_external_ffmpeg=$use_external_libraries])
 
-
-=======
->>>>>>> Gotham_beta3
 AC_ARG_ENABLE([libav-compat],
   [AS_HELP_STRING([--enable-libav-compat],
   [build a wrapper around libav to provide the functions needed by XBMC. This is
@@ -2734,14 +2731,11 @@ AC_SUBST(USE_ANDROID)
 AC_SUBST(GTEST_CONFIGURED)
 AC_SUBST(USE_DOXYGEN)
 AC_SUBST(USE_PVR_ADDONS)
-<<<<<<< HEAD
+AC_SUBST(GNUTLS_ALL_LIBS)
+AC_SUBST(VORBISENC_ALL_LIBS)
 AC_SUBST(USE_EXYNOS4)
 AC_SUBST(USE_EXYNOS5)
 AC_SUBST(USE_HYBRIS)
-=======
-AC_SUBST(GNUTLS_ALL_LIBS)
-AC_SUBST(VORBISENC_ALL_LIBS)
->>>>>>> Gotham_beta3
 
 # pushd and popd are not available in other shells besides bash, so implement
 # our own pushd/popd functions
