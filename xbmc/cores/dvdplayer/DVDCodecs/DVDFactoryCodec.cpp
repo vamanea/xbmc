@@ -239,8 +239,19 @@ CDVDVideoCodec* CDVDFactoryCodec::CreateVideoCodec(CDVDStreamInfo &hint, unsigne
   }
 #endif
 
-#if defined(HAVE_EXYNOS4) && defined(_LINUX)
-  if( (pCodec = OpenCodec(new CDVDVideoCodecExynos4(), hint, options)) ) return pCodec;
+#if (defined(HAVE_EXYNOS4) || defined(HAVE_EXYNOS5)) && defined(_LINUX)
+  if (!hint.software )
+  {
+    // We only support these codecs for Exynos decoders
+    if (hint.codec == CODEC_ID_H264 || hint.codec == CODEC_ID_MPEG2VIDEO || hint.codec == CODEC_ID_VC1)
+    {
+#if defined(HAVE_EXYNOS5)
+      if( (pCodec = OpenCodec(new CDVDVideoCodecExynos5(), hint, options)) ) return pCodec;
+#elif
+      if( (pCodec = OpenCodec(new CDVDVideoCodecExynos4(), hint, options)) ) return pCodec;
+#endif
+    }
+  }
 #endif
 
 #if defined(HAVE_EXYNOS5) && defined(_LINUX)
