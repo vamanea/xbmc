@@ -45,6 +45,14 @@ void HWComposer::present(HWComposerNativeWindowBuffer *buffer)
   fblayer->handle = buffer->handle;
   fblayer->acquireFenceFd = getFenceBufferFd(buffer);
   fblayer->releaseFenceFd = -1;
+
+  //mlist[0]->hwLayers[0].handle = NULL;
+  mlist[0]->hwLayers[0].compositionType = HWC_FRAMEBUFFER;
+  //mlist[0]->hwLayers[0].flags = HWC_SKIP_LAYER;
+
+  mlist[0]->hwLayers[1].handle = NULL;
+  mlist[0]->hwLayers[1].flags = HWC_SKIP_LAYER;
+  mlist[0]->hwLayers[1].compositionType = HWC_FRAMEBUFFER_TARGET;
   int err = hwcdevice->prepare(hwcdevice, HWC_NUM_DISPLAY_TYPES, mlist);
   assert(err == 0);
 
@@ -164,7 +172,7 @@ bool CEGLNativeTypeHybris::CreateNativeWindow()
   list->numHwLayers = 2;
 
   m_hwNativeWindow = new HWComposer(res.iWidth, res.iHeight, HAL_PIXEL_FORMAT_RGBA_8888,
-                                    m_hwcDevicePtr, m_bufferList, &list->hwLayers[1]);
+                                    m_hwcDevicePtr, m_bufferList, &list->hwLayers[0]);
 
   if (m_hwNativeWindow == NULL)
   {

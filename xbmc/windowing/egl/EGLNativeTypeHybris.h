@@ -26,12 +26,15 @@
 #include <hwcomposerwindow/hwcomposer_window.h>
 #include <hardware/hardware.h>
 #include <hardware/hwcomposer.h>
+#include <sync/sync.h>
 #endif
 
 #include "EGLNativeType.h"
 #include "threads/Thread.h"
 
 class CEGLNativeTypeHybris;
+
+#if 0
 
 class CHybrisVideoRenderer : public CThread
 {
@@ -47,6 +50,23 @@ private:
 protected:
   void Process();
 };
+#endif
+
+
+#if defined(TARGET_HYBRIS)
+class HWComposer : public HWComposerNativeWindow
+{
+  private:
+    hwc_layer_1_t *fblayer;
+    hwc_composer_device_1_t *hwcdevice;
+    hwc_display_contents_1_t **mlist;
+  protected:
+    void present(HWComposerNativeWindowBuffer *buffer);
+  public:
+    HWComposer(unsigned int width, unsigned int height, unsigned int format, hwc_composer_device_1_t *device, hwc_display_contents_1_t **mList, hwc_layer_1_t *layer);
+    void set();	
+};
+#endif
 
 class CEGLNativeTypeHybris : public CEGLNativeType
 {
@@ -82,5 +102,5 @@ private:
   HWComposerNativeWindow     *m_hwNativeWindow;
   ANativeWindow              *m_swNativeWindow;
 #endif
-  CHybrisVideoRenderer       *m_videoRenderThread;
+//  CHybrisVideoRenderer       *m_videoRenderThread;
 };
