@@ -251,12 +251,9 @@ CDVDVideoCodec* CDVDFactoryCodec::CreateVideoCodec(CDVDStreamInfo &hint, unsigne
 #endif
 
 #if defined(TARGET_HYBRIS)
-  if (!hint.software )
+  if (hint.codec == CODEC_ID_H264 || hint.codec == CODEC_ID_MPEG2VIDEO || hint.codec == CODEC_ID_VC1)
   {
-    if (hint.codec == CODEC_ID_H264 || hint.codec == CODEC_ID_MPEG2VIDEO || hint.codec == CODEC_ID_VC1)
-    {
-      if ( (pCodec = OpenCodec(new CDVDVideoCodecHybris(), hint, options)) ) return pCodec;
-    }
+    if ( (pCodec = OpenCodec(new CDVDVideoCodecHybris(), hint, options)) ) return pCodec;
   }
 #endif
 

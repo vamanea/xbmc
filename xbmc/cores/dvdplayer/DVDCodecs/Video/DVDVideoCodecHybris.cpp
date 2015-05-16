@@ -86,6 +86,9 @@ bool CDVDVideoCodecHybris::Open(CDVDStreamInfo &hints, CDVDCodecOptions &options
   if (hints.software)
     return false;
 
+  if (hints.width * hints.height > 1280 * 720)
+      return false;
+
   if(m_bitstream) {
       SAFE_DELETE(m_bitstream);
       m_bitstream = NULL;
@@ -116,16 +119,19 @@ bool CDVDVideoCodecHybris::Open(CDVDStreamInfo &hints, CDVDCodecOptions &options
     case CODEC_ID_H264:
       m_name = "hyb-h264";
       m_mimeType = "video/avc";
-      m_bitstream = new CBitstreamConverter;
-      if (!m_bitstream->Open(m_hints.codec, (uint8_t*)m_hints.extradata, m_hints.extrasize, true))
-      {
-        SAFE_DELETE(m_bitstream);
-        return false;
+      if (m_hints.extradata && *(uint8_t*)m_hints.extradata == 1) {
+        m_bitstream = new CBitstreamConverter;
+        if (!m_bitstream->Open(m_hints.codec, (uint8_t*)m_hints.extradata, m_hints.extrasize, true))
+        {
+          CLog::Log(LOGERROR, "%s::%s - Failed to open bitstream for %x %s", CLASSNAME, __func__, *(uint8_t*)m_hints.extradata, m_name.c_str());
+          SAFE_DELETE(m_bitstream);
+          return false;
+        }
       }
       break;
     default:
+      CLog::Log(LOGERROR, "%s::%s - Invalid codec id %s", CLASSNAME, __func__, m_name.c_str());
       return false;
-      break;
   }
 
   m_format = media_format_create_video_format("video/avc", hints.width, hints.height, 0, 0);
@@ -133,15 +139,7 @@ bool CDVDVideoCodecHybris::Open(CDVDStreamInfo &hints, CDVDCodecOptions &options
     CLog::Log(LOGERROR, "%s::%s - Failed to create format object for %s", CLASSNAME, __func__, m_mimeType.c_str());
     return false;
   }
-
-  m_codec = media_codec_create_by_codec_type(m_mimeType.c_str());
-  if (m_codec == NULL) {
-    CLog::Log(LOGERROR, "%s::%s - Failed to create codec for %s", CLASSNAME, __func__, m_mimeType.c_str());
-    media_codec_release(m_codec);
-    media_codec_delegate_destroy(m_codec);
-    media_format_destroy(m_codec);
-    return false;
-  }
+  CLog::Log(LOGERROR, "%s::%s - Created format object for %s", CLASSNAME, __func__, m_mimeType.c_str());
 
   if (hints.extrasize > 0) {
     size_t size = m_hints.extrasize;
@@ -153,6 +151,17 @@ bool CDVDVideoCodecHybris::Open(CDVDStreamInfo &hints, CDVDCodecOptions &options
     }
     media_format_set_byte_buffer(m_format, "csd-0", (uint8_t*)src_ptr, size);
   }
+
+  m_codec = media_codec_create_by_codec_type("video/avc");
+  if (m_codec == NULL) {
+    CLog::Log(LOGERROR, "%s::%s - Failed to create codec for %s", CLASSNAME, __func__, m_mimeType.c_str());
+    media_codec_release(m_codec);
+    media_codec_delegate_destroy(m_codec);
+    media_format_destroy(m_format);
+    return false;
+  }
+  CLog::Log(LOGERROR, "%s::%s - Created codec for %s", CLASSNAME, __func__, m_mimeType.c_str());
+
 
   if (media_codec_configure(m_codec, m_format, 0) != OK) {
     CLog::Log(LOGERROR, "%s::%s - Failed to configure codec for %s", CLASSNAME, __func__, m_mimeType.c_str());
@@ -548,10 +557,10 @@ void CDVDVideoCodecHybris::OutputFormatChanged(void)
       m_videoBuffer.data[3] = NULL;
       m_videoBuffer.format = RENDER_FMT_YUV420P;
     }
-#if 0
-    else if (color_format == CJNIMediaCodecInfoCodecCapabilities::COLOR_FormatYUV420SemiPlanar
+/*    else if (color_format == CJNIMediaCodecInfoCodecCapabilities::COLOR_FormatYUV420SemiPlanar
           || color_format == CJNIMediaCodecInfoCodecCapabilities::COLOR_QCOM_FormatYUV420SemiPlanar
-          || color_format == CJNIMediaCodecInfoCodecCapabilities::COLOR_TI_FormatYUV420PackedSemiPlanar)
+          || color_format == CJNIMediaCodecInfoCodecCapabilities::COLOR_TI_FormatYUV420PackedSemiPlanar)*/
+    else if (color_format == 21/*CJNIMediaCodecInfoCodecCapabilities::COLOR_FormatYUV420SemiPlanar*/)
     {
       CLog::Log(LOGDEBUG, "CDVDVideoCodecAndroidMediaCodec:: COLOR_FormatYUV420SemiPlanar");
 
@@ -580,7 +589,6 @@ void CDVDVideoCodecHybris::OutputFormatChanged(void)
       m_videoBuffer.data[3] = NULL;
       m_videoBuffer.format = RENDER_FMT_NV12;
     }
-#endif
     else
     {
       CLog::Log(LOGERROR, "CDVDVideoCodecAndroidMediaCodec:: Fixme unknown color_format(%d)", color_format);
