@@ -34,24 +34,6 @@
 
 class CEGLNativeTypeHybris;
 
-#if 0
-
-class CHybrisVideoRenderer : public CThread
-{
-public:
-  CHybrisVideoRenderer(hwc_display_contents_1_t **bufferList,
-    hwc_composer_device_1_t *hwcDevicePtr,
-    HWComposerNativeWindow *nativeWindow);
-  virtual ~CHybrisVideoRenderer();
-private:
-  hwc_display_contents_1_t   **m_bufferList;
-  hwc_composer_device_1_t    *m_hwcDevicePtr;
-  HWComposerNativeWindow     *m_hwNativeWindow;
-protected:
-  void Process();
-};
-#endif
-
 
 #if defined(TARGET_HYBRIS)
 class HWComposer : public HWComposerNativeWindow
@@ -63,8 +45,11 @@ class HWComposer : public HWComposerNativeWindow
   protected:
     void present(HWComposerNativeWindowBuffer *buffer);
   public:
-    HWComposer(unsigned int width, unsigned int height, unsigned int format, hwc_composer_device_1_t *device, hwc_display_contents_1_t **mList, hwc_layer_1_t *layer);
-    void set();	
+    HWComposer(unsigned int width, unsigned int height, unsigned int format,
+               hwc_composer_device_1_t *device,
+               hwc_display_contents_1_t **mList,
+               hwc_layer_1_t *layer);
+    void set(); 
 };
 #endif
 
@@ -93,7 +78,6 @@ public:
   virtual bool  GetPreferredResolution(RESOLUTION_INFO *res) const;
 
   virtual bool  ShowWindow(bool show);
-  void SwapSurface(EGLDisplay display, EGLSurface surface);
 #if defined(TARGET_HYBRIS)
 private:
   hw_module_t                *m_hwcModule;

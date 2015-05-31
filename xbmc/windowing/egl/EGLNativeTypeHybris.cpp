@@ -17,10 +17,13 @@
  *  <http://www.gnu.org/licenses/>.
  *
  */
+
 #if defined(TARGET_HYBRIS)
+#include <android-config.h>
 #include <hwcomposerwindow/hwcomposer_window.h>
 #include <hardware/hardware.h>
 #include <hardware/hwcomposer.h>
+#include <sync/sync.h>
 #endif
 
 #include "system.h"
@@ -31,7 +34,10 @@
 #include "guilib/gui3d.h"
 
 #if defined(TARGET_HYBRIS)
-HWComposer::HWComposer(unsigned int width, unsigned int height, unsigned int format, hwc_composer_device_1_t *device, hwc_display_contents_1_t **mList, hwc_layer_1_t *layer) : HWComposerNativeWindow(width, height, format)
+HWComposer::HWComposer(unsigned int width, unsigned int height, unsigned int format,
+                       hwc_composer_device_1_t *device,
+                       hwc_display_contents_1_t **mList,
+                       hwc_layer_1_t *layer) : HWComposerNativeWindow(width, height, format)
 {
   fblayer = layer;
   hwcdevice = device;
@@ -41,22 +47,17 @@ HWComposer::HWComposer(unsigned int width, unsigned int height, unsigned int for
 void HWComposer::present(HWComposerNativeWindowBuffer *buffer)
 {
   int oldretire = mlist[0]->retireFenceFd;
-  mlist[0]->retireFenceFd = -1;
+   mlist[0]->retireFenceFd = -1;
+
   fblayer->handle = buffer->handle;
   fblayer->acquireFenceFd = getFenceBufferFd(buffer);
   fblayer->releaseFenceFd = -1;
+  fblayer->compositionType = HWC_FRAMEBUFFER_TARGET;
 
-  //mlist[0]->hwLayers[0].handle = NULL;
-  mlist[0]->hwLayers[0].compositionType = HWC_FRAMEBUFFER;
-  //mlist[0]->hwLayers[0].flags = HWC_SKIP_LAYER;
-
-  mlist[0]->hwLayers[1].handle = NULL;
-  mlist[0]->hwLayers[1].flags = HWC_SKIP_LAYER;
-  mlist[0]->hwLayers[1].compositionType = HWC_FRAMEBUFFER_TARGET;
-  int err = hwcdevice->prepare(hwcdevice, HWC_NUM_DISPLAY_TYPES, mlist);
+  int err = hwcdevice->prepare(hwcdevice, 1, mlist);
   assert(err == 0);
 
-  err = hwcdevice->set(hwcdevice, HWC_NUM_DISPLAY_TYPES, mlist);
+  err = hwcdevice->set(hwcdevice, HWC_NUM_PHYSICAL_DISPLAY_TYPES, mlist);
   assert(err == 0);
   setFenceBufferFd(buffer, fblayer->releaseFenceFd);
 
@@ -97,9 +98,11 @@ bool CEGLNativeTypeHybris::CheckCompatibility()
   {
     return false;
   }
+  CLog::Log(LOGNOTICE,"HWC API version: %x\n",m_hwcDevicePtr->common.version >> 16);
 
-  m_hwcDevicePtr->blank(m_hwcDevicePtr, 0, 0);
-  m_hwcDevicePtr->eventControl(m_hwcDevicePtr, 0, HWC_EVENT_VSYNC, 0);
+  m_hwcDevicePtr->blank(m_hwcDevicePtr, HWC_DISPLAY_PRIMARY, 0);
+  m_hwcDevicePtr->eventControl(m_hwcDevicePtr, HWC_DISPLAY_PRIMARY, HWC_EVENT_VSYNC, 0);
+
   return true;
 #else
   return false;
@@ -117,7 +120,8 @@ void CEGLNativeTypeHybris::Destroy()
 
 bool CEGLNativeTypeHybris::CreateNativeDisplay()
 {
-  m_nativeDisplay = EGL_DEFAULT_DISPLAY;
+  m_nativeDisplay = eglGetDisplay(NULL);
+
   return true;
 }
 
@@ -125,12 +129,14 @@ bool CEGLNativeTypeHybris::CreateNativeWindow()
 {
 #if defined(TARGET_HYBRIS)
   RESOLUTION_INFO res;
+
   if (!GetNativeResolution(&res))
     return false;
 
   size_t size = sizeof(hwc_display_contents_1_t) + 2 * sizeof(hwc_layer_1_t);
 
   hwc_display_contents_1_t *list = (hwc_display_contents_1_t *) malloc(size);
+
   m_bufferList = (hwc_display_contents_1_t **) malloc(HWC_NUM_DISPLAY_TYPES * sizeof(hwc_display_contents_1_t *));
   const hwc_rect_t r = { 0, 0, res.iWidth, res.iHeight };
 
@@ -142,7 +148,7 @@ bool CEGLNativeTypeHybris::CreateNativeWindow()
   memset(layer, 0, sizeof(hwc_layer_1_t));
   layer->compositionType = HWC_FRAMEBUFFER;
   layer->hints = 0;
-  layer->flags = 0;
+  layer->flags = 0/*HWC_SKIP_LAYER*/;
   layer->handle = 0;
   layer->transform = 0;
   layer->blending = HWC_BLENDING_NONE;
@@ -159,28 +165,27 @@ bool CEGLNativeTypeHybris::CreateNativeWindow()
   layer->flags = 0;
   layer->handle = 0;
   layer->transform = 0;
-  layer->blending = HWC_BLENDING_NONE;
+  layer->blending = HWC_BLENDING_PREMULT;
   layer->sourceCrop = r;
   layer->displayFrame = r;
   layer->visibleRegionScreen.numRects = 1;
   layer->visibleRegionScreen.rects = &layer->displayFrame;
   layer->acquireFenceFd = -1;
   layer->releaseFenceFd = -1;
+  layer->planeAlpha = 0xFF;
 
   list->retireFenceFd = -1;
   list->flags = HWC_GEOMETRY_CHANGED;
   list->numHwLayers = 2;
 
   m_hwNativeWindow = new HWComposer(res.iWidth, res.iHeight, HAL_PIXEL_FORMAT_RGBA_8888,
-                                    m_hwcDevicePtr, m_bufferList, &list->hwLayers[0]);
-
+                                    m_hwcDevicePtr, m_bufferList, &list->hwLayers[1]);
   if (m_hwNativeWindow == NULL)
   {
     CLog::Log(LOGERROR, "HWComposer native window failed!");
     return false;
   }
   m_swNativeWindow = (static_cast<ANativeWindow *> (m_hwNativeWindow));
-
 
   return true;
 #else
@@ -192,7 +197,6 @@ bool CEGLNativeTypeHybris::GetNativeDisplay(XBNativeDisplayType **nativeDisplay)
 {
   if (!nativeDisplay)
     return false;
-
   *nativeDisplay = (XBNativeDisplayType*) &m_nativeDisplay;
 
   return true;
@@ -283,52 +287,3 @@ bool CEGLNativeTypeHybris::ShowWindow(bool show)
 {
   return true;
 } 
-
-void CEGLNativeTypeHybris::SwapSurface(EGLDisplay display, EGLSurface surface)
-{
-#if defined(TARGET_HYBRIS)
-
-#if 0
-  HWComposerNativeWindow* window = (HWComposerNativeWindow*)m_hwNativeWindow;
-  HWComposerNativeWindowBuffer *front;
-#endif
-  eglSwapBuffers(display, surface);
-#if 0
-  window->lockFrontBuffer(&front);
-
-  m_bufferList[0]->hwLayers[1].handle = front->handle;
-  m_bufferList[0]->hwLayers[0].handle = NULL;
-  m_bufferList[0]->hwLayers[0].flags = HWC_SKIP_LAYER;
-  
-  int oldretire = -1, oldrelease = -1, oldrelease2 = -1; 
-  oldretire = m_bufferList[0]->retireFenceFd;
-  oldrelease = m_bufferList[0]->hwLayers[1].releaseFenceFd;
-  oldrelease2 = m_bufferList[0]->hwLayers[0].releaseFenceFd;
-
-  int err = m_hwcDevicePtr->prepare(m_hwcDevicePtr, HWC_NUM_DISPLAY_TYPES, m_bufferList);
-  if(err) {
-    CLog::Log(LOGERROR, "prepare() failed!");
-  }
-
-  err = m_hwcDevicePtr->set(m_hwcDevicePtr, HWC_NUM_DISPLAY_TYPES, m_bufferList);
-
-  window->unlockFrontBuffer(front);
-  if (oldrelease != -1)
-  {
-    sync_wait(oldrelease, -1);
-    close(oldrelease);
-  }
-  if (oldrelease2 != -1)
-  {
-    sync_wait(oldrelease2, -1);
-    close(oldrelease2);
-  }
-  
-  if (oldretire != -1)
-  {
-    sync_wait(oldretire, -1);
-    close(oldretire);
-  }
-#endif
-#endif
-}
