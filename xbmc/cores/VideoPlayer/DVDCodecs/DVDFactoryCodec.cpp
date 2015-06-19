@@ -41,6 +41,12 @@
 #include "Video/DVDVideoCodecAndroidMediaCodec.h"
 #include "platform/android/activity/AndroidFeatures.h"
 #endif
+#if defined(HAVE_EXYNOS4)
+#include "Video/DVDVideoCodecExynos4.h"
+#endif
+#if defined(HAVE_EXYNOS5)
+#include "Video/DVDVideoCodecExynos5.h"
+#endif
 #include "Audio/DVDAudioCodecFFmpeg.h"
 #include "Audio/DVDAudioCodecPassthrough.h"
 #include "Overlay/DVDOverlayCodecSSA.h"
@@ -149,7 +155,12 @@ CDVDVideoCodec* CDVDFactoryCodec::CreateVideoCodec(CDVDStreamInfo &hint, CProces
     pCodec = OpenCodec(new CDVDVideoCodecOpenMax(processInfo), hint, options);
 #elif defined(HAS_MMAL)
     pCodec = OpenCodec(new CMMALVideo(processInfo), hint, options);
+#elif defined(HAVE_EXYNOS4)
+    pCodec = OpenCodec(new CDVDVideoCodecExynos4(processInfo), hint, options);
+#elif defined(HAVE_EXYNOS5)
+    pCodec = OpenCodec(new CDVDVideoCodecExynos5(processInfo), hint, options);
 #endif
+
     if (pCodec)
       return pCodec;
   }

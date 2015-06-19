@@ -212,7 +212,10 @@ lcms2_disabled="== lcms2 disabled. ICC profile support will not be available. ==
 libbluetooth_not_found="== Could not find libbluetooth. Bluetooth support will not be available =="
 libbluetooth_enabled="== libbluetooth enabled. =="
 libbluetooth_disabled="== libbluetooth disabled. Bluetooth support will not be available. =="
-
+exynos4_enabled="== Exynos4 enabled. =="
+exynos4_disabled="== Exynos4 disabled. =="
+exynos5_enabled="== Exynos5 enabled. =="
+exynos5_disabled="== Exynos5 disabled. =="
 
 AC_ARG_WITH([ffmpeg],
   [AS_HELP_STRING([--with-ffmpeg],
@@ -485,6 +488,18 @@ AC_ARG_ENABLE([libav-compat],
    *not* supported by ${APP_NAME} developers and is provided only for convenience. (default is no) 'Linux only'])],
   [use_libav_hacks=$enableval],
   [use_libav_hacks=no])
+
+AC_ARG_ENABLE([exynos4],
+  [AS_HELP_STRING([--enable-exynos4],
+  [enable use of Exynos4 hardware decoder (default is no) 'Linux only'])],
+  [use_exynos4=$enableval],
+  [use_exynos4=no])
+
+AC_ARG_ENABLE([exynos5],
+  [AS_HELP_STRING([--enable-exynos5],
+  [enable use of Exynos5 hardware decoder (default is no) 'Linux only'])],
+  [use_exynos5=$enableval],
+  [use_exynos5=no])
 
 ### End of external library options
 
@@ -1500,6 +1515,16 @@ else
   AC_MSG_NOTICE($libcec_disabled)
 fi
 
+USE_EXYNOS4=0
+if test "x$use_exynos4" != "xno"; then
+  USE_EXYNOS4=1;AC_DEFINE(HAVE_EXYNOS4,[1],["Define if Exynos4 platform hardware decoder is present"])
+fi
+
+USE_EXYNOS5=0
+if test "x$use_exynos5" != "xno"; then
+  USE_EXYNOS5=1;AC_DEFINE(HAVE_EXYNOS5,[1],["Define if Exynos5 platform hardware decoder is present"])
+fi
+
 # lcms2
 if test "$use_lcms2" = "auto"; then
   PKG_CHECK_MODULES([LCMS2],[lcms2],,[use_lcms2="no";AC_MSG_RESULT($lcms2_not_found)])
@@ -2017,6 +2042,18 @@ else
   final_message="$final_message\n  PulseAudio:\tNo"
 fi
 
+if test "x$use_exynos4" != "xno"; then
+  final_message="$final_message\n  Exynos4 support:\tYes"
+else
+  final_message="$final_message\n  Exynos4 support:\tNo"
+fi
+
+if test "x$use_exynos5" != "xno"; then
+  final_message="$final_message\n  Exynos5 support:\tYes"
+else
+  final_message="$final_message\n  Exynos5 support:\tNo"
+fi
+
 # Google Test Framework
 if test "$configure_gtest" = "yes"; then
   AC_MSG_NOTICE($gtest_enabled)
@@ -2358,6 +2395,8 @@ AC_SUBST(USE_MMAL)
 AC_SUBST(USE_X11)
 AC_SUBST(USE_OPTICAL_DRIVE)
 AC_SUBST(USE_HYBRIS)
+AC_SUBST(USE_EXYNOS4)
+AC_SUBST(USE_EXYNOS5)
 
 # pushd and popd are not available in other shells besides bash, so implement
 # our own pushd/popd functions

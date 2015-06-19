@@ -34,8 +34,16 @@ ifeq (@USE_MMAL@,1)
 SRCS += MMALCodec.cpp MMALFFmpeg.cpp
 endif
 
+ifeq (@USE_EXYNOS4@,1)
+SRCS += DVDVideoCodecExynos4.cpp
+endif
+
+ifeq (@USE_EXYNOS5@,1)
+SRCS += DVDVideoCodecExynos5.cpp
+SRCS += deinterleave_chroma.neon.S
+endif
+
 LIB=Video.a
 
 include @abs_top_srcdir@/Makefile.include
--include $(patsubst %.cpp,%.P,$(patsubst %.c,%.P,$(SRCS)))
-
+-include $(patsubst %.cpp,%.P,$(patsubst %.c,%.P,$(patsubst %.S,,$(SRCS)))) 
