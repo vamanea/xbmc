@@ -5,6 +5,7 @@ SRCS+= EGLNativeTypeAmlogic.cpp
 SRCS+= EGLNativeTypeAndroid.cpp
 SRCS+= EGLNativeTypeRaspberryPI.cpp
 SRCS+= EGLNativeTypeWayland.cpp
+SRCS+= EGLNativeTypeHybris.cpp
 SRCS+= EGLNativeTypeIMX.cpp
 SRCS+= EGLWrapper.cpp
 

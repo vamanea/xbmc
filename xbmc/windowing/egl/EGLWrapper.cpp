@@ -26,6 +26,7 @@
 #include "EGLNativeTypeRaspberryPI.h"
 #include "EGLNativeTypeWayland.h"
 #include "EGLNativeTypeIMX.h"
+#include "EGLNativeTypeHybris.h"
 #include "EGLWrapper.h"
 
 #define CheckError() m_result = eglGetError(); if(m_result != EGL_SUCCESS) CLog::Log(LOGERROR, "EGL error in %s: %x",__FUNCTION__, m_result);
@@ -83,6 +84,7 @@ bool CEGLWrapper::Initialize(const std::string &implementation)
       (nativeGuess = CreateEGLNativeType<CEGLNativeTypeAndroid>(implementation)) ||
       (nativeGuess = CreateEGLNativeType<CEGLNativeTypeAmlogic>(implementation)) ||
       (nativeGuess = CreateEGLNativeType<CEGLNativeTypeRaspberryPI>(implementation)) ||
+      (nativeGuess = CreateEGLNativeType<CEGLNativeTypeHybris>(implementation)) ||
       (nativeGuess = CreateEGLNativeType<CEGLNativeTypeIMX>(implementation))
       )
   {

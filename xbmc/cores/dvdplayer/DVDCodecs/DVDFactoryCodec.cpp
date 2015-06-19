@@ -49,6 +49,15 @@
 #include "Video/DVDVideoCodecAndroidMediaCodec.h"
 #include "android/activity/AndroidFeatures.h"
 #endif
+#if defined(HAVE_EXYNOS4)
+#include "Video/DVDVideoCodecExynos4.h"
+#endif
+#if defined(HAVE_EXYNOS5)
+#include "Video/DVDVideoCodecExynos5.h"
+#endif
+#if defined(HAS_HYBRIS)
+#include "Video/DVDVideoCodecHybris.h"
+#endif
 #include "Audio/DVDAudioCodecFFmpeg.h"
 #include "Audio/DVDAudioCodecPassthrough.h"
 #include "Overlay/DVDOverlayCodecSSA.h"
@@ -192,7 +201,41 @@ CDVDVideoCodec* CDVDFactoryCodec::CreateVideoCodec(CDVDStreamInfo &hint, unsigne
 #else
   hwSupport += "iMXVPU:no ";
 #endif
+#if defined(HAS_HYBRIS)
+  hwSupport += "hybris:yes ";
+#else
+  hwSupport += "hybris:no ";
+#endif
+#if defined(HAVE_EXYNOS4) && defined(_LINUX)
+  hwSupport += "MFCv5:yes ";
+#elif defined(_LINUX)
+  hwSupport += "MFCv5:no ";
+#endif
+#if defined(HAVE_EXYNOS5) && defined(_LINUX)
+  hwSupport += "MFCv6:yes ";
+#elif defined(_LINUX)
+  hwSupport += "MFCv6:no ";
+#endif
+
   CLog::Log(LOGDEBUG, "CDVDFactoryCodec: compiled in hardware support: %s", hwSupport.c_str());
+
+#if defined(HAVE_EXYNOS4) && defined(_LINUX)
+  if( (pCodec = OpenCodec(new CDVDVideoCodecExynos4(), hint, options)) ) return pCodec;
+#endif
+
+#if defined(HAVE_EXYNOS5) && defined(_LINUX)
+  if( (pCodec = OpenCodec(new CDVDVideoCodecExynos5(), hint, options)) ) return pCodec;
+#endif
+
+#if defined(HAS_HYBRIS)
+  if (!hint.software && CSettings::Get().GetInt("videoplayer.decodingmethod") == 1)
+  {
+    if (hint.codec == CODEC_ID_H264 /*|| hint.codec == CODEC_ID_MPEG2VIDEO*/ || hint.codec == CODEC_ID_VC1)
+    {
+      if ( (pCodec = OpenCodec(new CDVDVideoCodecHybris(), hint, options)) ) return pCodec;
+    }
+  }
+#endif
 
   if (hint.stills && (hint.codec == AV_CODEC_ID_MPEG2VIDEO || hint.codec == AV_CODEC_ID_MPEG1VIDEO))
   {

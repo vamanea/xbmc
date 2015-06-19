@@ -42,6 +42,19 @@ SRCS += MMALCodec.cpp
 SRCS += DVDVideoCodecMMAL.cpp
 endif
 
+ifeq (@USE_HYBRIS@,1)
+SRCS += DVDVideoCodecHybris.cpp
+endif
+
+ifeq (@USE_EXYNOS4@,1)
+SRCS += DVDVideoCodecExynos4.cpp
+endif
+
+ifeq (@USE_EXYNOS5@,1)
+SRCS += DVDVideoCodecExynos5.cpp
+SRCS += deinterleave_chroma.neon.S
+endif
+
 LIB=Video.a
 
 include @abs_top_srcdir@/Makefile.include
