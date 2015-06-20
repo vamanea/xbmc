@@ -39,6 +39,7 @@
 	#include "settings/AdvancedSettings.h"
 #endif
 #include "utils/fastmemcpy.h"
+#include "utils/log.h"
 
 #include <linux/LinuxV4l2.h>
 
