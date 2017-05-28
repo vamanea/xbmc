@@ -681,6 +681,33 @@ case $use_platform in
      use_neon=yes
      use_cpu=cortex-a7
      ;;
+  hybris)
+     target_platform=target_hybris
+     ARCH="arm"
+     use_arch="arm"
+     use_cpu=cortex-a15
+     use_joystick=no
+     use_neon=yes
+     use_gles=yes
+     use_gl=no
+     use_sdl=no
+     use_wayland=no
+     AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_LINUX -D_LINUX -DTARGET_HYBRIS")
+     AC_DEFINE(HAS_EGLGLES, [1], [Define if supporting EGL based GLES Framebuffer])
+     AC_DEFINE(HAS_HYBRIS, [1], [Define if supporting Hybris based systems])
+     USE_HYBRIS=1
+     CFLAGS="$CFLAGS"
+     CXXFLAGS="$CXXFLAGS"
+     PKG_CHECK_MODULES([HWCOMPOSEREGL],  [hwcomposer-egl >= 0.1],
+       [INCLUDES="$INCLUDES -I/usr/include/hybris $HWCOMPOSEREGL_CFLAGS"; LIBS="$LIBS $HWCOMPOSEREGL_LIBS"],
+       AC_MSG_ERROR($missing_library))
+     PKG_CHECK_MODULES([HYBRISEGL],  [hybris-egl-platform >= 0.1],
+       [INCLUDES="$INCLUDES $HYBRISEGL_CFLAGS"; LIBS="$LIBS $HYBRISEGL_LIBS"],
+       AC_MSG_ERROR($missing_library))
+     PKG_CHECK_MODULES([LIBHARDWARE],  [libhardware >= 0.1],
+       [INCLUDES="$INCLUDES $LIBHARDWARE_CFLAGS"; LIBS="$LIBS $LIBHARDWARE_LIBS -lsync -lmedia"],
+       AC_MSG_ERROR($missing_library))
+     ;;
 esac
 
 if test "$target_platform" = "target_raspberry_pi" ; then
@@ -2330,6 +2357,7 @@ AC_SUBST(HAVE_SSE4)
 AC_SUBST(USE_MMAL)
 AC_SUBST(USE_X11)
 AC_SUBST(USE_OPTICAL_DRIVE)
+AC_SUBST(USE_HYBRIS)
 
 # pushd and popd are not available in other shells besides bash, so implement
 # our own pushd/popd functions

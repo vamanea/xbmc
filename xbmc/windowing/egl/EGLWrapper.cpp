@@ -34,6 +34,9 @@
 #if defined(HAS_IMXVPU)
   #include "EGLNativeTypeIMX.h"
 #endif
+#if defined(HAS_HYBRIS)
+  #include "EGLNativeTypeHybris.h"
+#endif
 #if defined(TARGET_LINUX) && defined(HAS_LIBAMCODEC)
 #include "EGLNativeTypeAmlogic.h"
 #endif
@@ -99,6 +102,8 @@ bool CEGLWrapper::Initialize(const std::string &implementation)
       (nativeGuess = CreateEGLNativeType<CEGLNativeTypeRaspberryPI>(implementation))
 #elif defined(HAS_IMXVPU)
       (nativeGuess = CreateEGLNativeType<CEGLNativeTypeIMX>(implementation))
+#elif defined(HAS_HYBRIS)
+      (nativeGuess = CreateEGLNativeType<CEGLNativeTypeHybris>(implementation))
 #elif defined(TARGET_LINUX) && defined(HAS_LIBAMCODEC)
       (nativeGuess = CreateEGLNativeType<CEGLNativeTypeAmlogic>(implementation))
 #endif
